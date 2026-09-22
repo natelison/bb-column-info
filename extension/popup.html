@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { width: 300px; margin: 0; font: 13px/1.45 "Segoe UI", system-ui, sans-serif; color: #262626; }
+  header { padding: 12px 14px; border-bottom: 1px solid #e5e5e5; font-weight: 600; font-size: 14px; }
+  main { padding: 12px 14px; }
+  p { margin: 0 0 10px; }
+  .muted { color: #6e6e6e; }
+  .host { font-weight: 600; word-break: break-all; }
+  button {
+    background: #006ce0; color: #fff; border: 0; border-radius: 4px;
+    padding: 6px 12px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  button.link { background: none; color: #006ce0; padding: 0; font-weight: 400; }
+  button:disabled { opacity: .6; cursor: default; }
+  ul { list-style: none; padding: 0; margin: 6px 0 0; }
+  li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-top: 1px solid #f2f2f2; }
+  h3 { font-size: 12px; margin: 14px 0 0; color: #6e6e6e; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .ok { color: #1a7f37; }
+</style>
+</head>
+<body>
+  <header>Bb Column Info</header>
+  <main>
+    <div id="current"></div>
+    <h3>Enabled sites</h3>
+    <ul id="sites"><li class="muted">None yet</li></ul>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
