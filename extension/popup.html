@@ -19,12 +19,26 @@
   li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-top: 1px solid #f2f2f2; }
   h3 { font-size: 12px; margin: 14px 0 0; color: #6e6e6e; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
   .ok { color: #1a7f37; }
+  .setting { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0 2px; cursor: pointer; }
+  .setting small { display: block; color: #6e6e6e; font-size: 11px; }
+  .switch { position: relative; flex-shrink: 0; width: 30px; height: 16px; }
+  .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .switch .track { position: absolute; inset: 0; border-radius: 8px; background: #cdcdcd; transition: background .15s; }
+  .switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .switch input:checked + .track { background: #006ce0; }
+  .switch input:checked + .track::after { left: 16px; }
+  .switch input:focus-visible + .track { outline: 2px solid #006ce0; outline-offset: 1px; }
 </style>
 </head>
 <body>
   <header>Bb Column Info</header>
   <main>
     <div id="current"></div>
+    <h3>Settings</h3>
+    <label class="setting">
+      <span>Show points in grid<small>Adds "100 points" under each column header</small></span>
+      <span class="switch"><input type="checkbox" id="showPoints"><span class="track"></span></span>
+    </label>
     <h3>Enabled sites</h3>
     <ul id="sites"><li class="muted">None yet</li></ul>
   </main>

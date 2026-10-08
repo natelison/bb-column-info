@@ -312,4 +312,153 @@
   // Hide when the grid scrolls horizontally (header positions shift via translateX)
   document.addEventListener('scroll', () => { if (overlay.style.display === 'block') hide(); }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+
+  // =====================================================================
+  // Points possible in the grid view (old-gradebook style "100 points" row)
+  // =====================================================================
+  // Relies on HOST and getJson() defined above. Call setShowPoints(true/false)
+  // from the platform-specific settings code at the bottom of the file.
+
+  const PTS = 'bbPts';
+  const PTS_PATH = /\/ultra\/courses\/(_\d+_1)\/grades/;
+  const PTS_SUBHEADER = 'th[id^="non-sortable-subheader-"]';
+  const PTS_REFRESH_COOLDOWN_MS = 60_000;
+
+  const ptsCache = new Map();    // courseId -> Promise<Map(columnId -> column)>
+  const ptsLoadedAt = new Map(); // courseId -> time of last successful load
+  let showPoints = false;
+  let ptsApplying = false;
+  let ptsTimer = null;
+
+  function loadAllColumns(courseId) {
+    if (!ptsCache.has(courseId)) {
+      const p = (async () => {
+        const map = new Map();
+        // One paged request for the whole gradebook instead of one per column
+        let url = `${HOST}/learn/api/public/v2/courses/${courseId}/gradebook/columns` +
+                  `?fields=id,score.possible&limit=200`;
+        while (url) {
+          const j = await getJson(url);
+          for (const c of j.results || []) map.set(c.id, c);
+          url = j.paging?.nextPage ? HOST + j.paging.nextPage : null;
+        }
+        ptsLoadedAt.set(courseId, Date.now());
+        return map;
+      })().catch((e) => { ptsCache.delete(courseId); throw e; });
+      ptsCache.set(courseId, p);
+    }
+    return ptsCache.get(courseId);
+  }
+
+  const fmtPoints = (n) => {
+    if (n == null || Number.isNaN(Number(n))) return null;
+    const v = Number(n);
+    const s = Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/\.?0+$/, '');
+    return `${s} ${v === 1 ? 'point' : 'points'}`;
+  };
+
+  // The subheader cell is a fixed 36px tall (padding 0 12px 12px), so the band
+  // (15px) and the icon row have to share that space without overflowing.
+  const ptsStyle = document.createElement('style');
+  ptsStyle.textContent = `
+    th.${PTS}-cell {
+      display: flex !important;
+      flex-direction: column !important;
+      flex-wrap: nowrap !important;
+      justify-content: flex-start !important;
+      align-items: stretch !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      overflow: hidden !important;
+    }
+    th.${PTS}-cell > .${PTS} {
+      flex: 0 0 15px;
+      box-sizing: border-box;
+      height: 15px; padding: 0 6px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 12px; line-height: 14px; font-style: italic; font-weight: 400;
+      color: #404040; text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      pointer-events: none;
+    }
+    th.${PTS}-cell > :not(.${PTS}) {
+      flex: 1 1 auto; min-height: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding-bottom: 2px; box-sizing: border-box;
+    }
+    th.${PTS}-cell .MuiIconButton-root { padding: 2px !important; }
+  `;
+  document.head.appendChild(ptsStyle);
+
+  async function applyPoints() {
+    if (!showPoints) return;
+    const m = location.pathname.match(PTS_PATH);
+    if (!m) return;
+    const cells = document.querySelectorAll(PTS_SUBHEADER);
+    if (!cells.length) return;
+
+    let cols;
+    try { cols = await loadAllColumns(m[1]); } catch { return; }
+    if (!showPoints) return; // turned off while loading
+
+    ptsApplying = true;
+    for (const cell of cells) {
+      const col = cols.get(cell.id.replace('non-sortable-subheader-', ''));
+      const text = col ? fmtPoints(col.score?.possible) : null;
+      if (!text) continue; // Overall Grade, calculated or unknown columns
+
+      const existing = cell.querySelector(`:scope > .${PTS}`);
+      if (existing) {
+        if (existing.textContent !== text) existing.textContent = text;
+        continue;
+      }
+      const el = document.createElement('div');
+      el.className = PTS;
+      el.textContent = text;
+      cell.classList.add(`${PTS}-cell`);
+      // Stretch the band to the cell edges by cancelling the side padding
+      const cs = getComputedStyle(cell);
+      const pl = parseFloat(cs.paddingLeft) || 0, pr = parseFloat(cs.paddingRight) || 0;
+      el.style.margin = `0 ${-pr}px 0 ${-pl}px`;
+      el.style.width = `calc(100% + ${pl + pr}px)`;
+      cell.prepend(el); // above the View / submission icons
+    }
+    ptsApplying = false;
+  }
+
+  function removePoints() {
+    ptsApplying = true;
+    document.querySelectorAll(`.${PTS}`).forEach((el) => el.remove());
+    document.querySelectorAll(`th.${PTS}-cell`).forEach((th) => th.classList.remove(`${PTS}-cell`));
+    ptsApplying = false;
+  }
+
+  const schedulePoints = () => { clearTimeout(ptsTimer); ptsTimer = setTimeout(applyPoints, 150); };
+
+  // Ultra re-renders headers on scroll (virtualized columns), sort and navigation
+  new MutationObserver(() => { if (showPoints && !ptsApplying) schedulePoints(); })
+    .observe(document.body, { childList: true, subtree: true });
+
+  // Pick up point changes made in another tab, at most once a minute
+  window.addEventListener('focus', () => {
+    const m = location.pathname.match(PTS_PATH);
+    if (!m || !showPoints) return;
+    if (Date.now() - (ptsLoadedAt.get(m[1]) || 0) < PTS_REFRESH_COOLDOWN_MS) return;
+    ptsCache.delete(m[1]);
+    schedulePoints();
+  });
+
+  function setShowPoints(on) {
+    showPoints = !!on;
+    if (showPoints) schedulePoints(); else removePoints();
+  }
+
+  // ---- settings (extension popup toggle, stored in chrome.storage) ----
+  try {
+    chrome.storage.local.get({ showPoints: true }, (r) => setShowPoints(r.showPoints));
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && 'showPoints' in changes) setShowPoints(changes.showPoints.newValue);
+    });
+  } catch { setShowPoints(true); }
 })();

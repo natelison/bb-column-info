@@ -1,8 +1,8 @@
 # Privacy Policy: Bb Column Info
 
-**Effective date:** September 22, 2026
+**Effective date:** October 8, 2026
 
-Bb Column Info ("the extension") is a browser extension that shows Blackboard Learn Ultra gradebook column settings when you hover over a column header.
+Bb Column Info ("the extension") is a browser extension that shows Blackboard Learn Ultra gradebook column settings: points possible in the gradebook grid, and column details when you hover over a column header.
 
 ## Summary
 
@@ -10,7 +10,7 @@ Bb Column Info ("the extension") is a browser extension that shows Blackboard Le
 
 ## What the extension accesses
 
-- **Blackboard pages you enable.** The extension runs only on Blackboard sites you explicitly turn on from its popup. On those sites, it reads the gradebook page to find which column you are hovering over.
+- **Blackboard pages you enable.** The extension runs only on Blackboard sites you explicitly turn on from its popup. On those sites, it reads the gradebook page to find its column headers and which one you are hovering over.
 - **Blackboard REST API.** To show column details, the extension requests data about the gradebook column (for example its name, points possible, due date, category, and grading schema) directly from your institution's Blackboard server. It uses your existing Blackboard login session in the browser. These requests go only to the Blackboard site you enabled, and the results appear only on your screen.
 - **The current tab's address.** When you open the popup, the extension checks the current page's address to offer enabling the extension for that Blackboard site.
 
@@ -18,7 +18,7 @@ The extension does not read or request student grades, submissions, or other stu
 
 ## What the extension stores
 
-- **Your view preference** (Regular or Advanced), saved locally in your browser using Chrome's extension storage.
+- **Your display preferences** (Regular or Advanced view, and whether points show in the grid), saved locally in your browser using Chrome's extension storage.
 - **The list of sites you enabled**, which your browser keeps as the extension's site permissions.
 
 Both stay on your device and are removed when you uninstall the extension. You can remove an enabled site at any time from the popup.

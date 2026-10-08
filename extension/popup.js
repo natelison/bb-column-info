@@ -56,5 +56,9 @@ $('sites').addEventListener('click', async (e) => {
   await renderSites();
 });
 
+// Settings: changes reach open gradebook tabs through chrome.storage.onChanged
+chrome.storage.local.get({ showPoints: true }, ({ showPoints }) => { $('showPoints').checked = showPoints; });
+$('showPoints').addEventListener('change', (e) => chrome.storage.local.set({ showPoints: e.target.checked }));
+
 renderCurrent();
 renderSites();
